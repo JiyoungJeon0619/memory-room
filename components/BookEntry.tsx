@@ -150,7 +150,7 @@ export default function BookEntry({ memory, onClick }: Props) {
           font-style: italic; padding: 0 6px; position: relative; margin-bottom: 14px;
         }
         .entry-quote::before {
-          content: '\201C'; font-size: 58px; color: #F0D4C8;
+          content: "\\201C"; font-size: 58px; color: #F0D4C8;
           font-style: normal; line-height: 1;
           position: absolute; top: -14px; left: -10px; font-family: 'Noto Serif KR', serif;
         }
