@@ -28,6 +28,7 @@ export async function GET(request: NextRequest) {
       }),
     })
     const tokenData = await tokenRes.json()
+    console.log('[Kakao Token Response]', JSON.stringify(tokenData))
     if (!tokenData.access_token) throw new Error('카카오 토큰 발급 실패')
 
     // 2. 카카오 유저 정보 가져오기
