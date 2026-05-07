@@ -53,3 +53,10 @@ export default function SplashScreen() {
             display:'flex', alignItems:'center', justifyContent:'center', gap:10,
             boxShadow:'0 6px 20px rgba(254,229,0,0.4)',
           }}
+          >
+          카카오로 시작하기
+        </button>
+      </div>
+    </div>
+  )
+}
