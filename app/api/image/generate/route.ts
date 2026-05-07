@@ -72,7 +72,7 @@ async function generateInBackground(params: {
       n: 1,
     })
 
-    const tempUrl = imageResponse.data[0]?.url
+   const tempUrl = imageResponse.data?.[0]?.url ?? ''
     if (!tempUrl) throw new Error('이미지 생성 실패')
 
     // STEP 3: Supabase Storage에 영구 저장 (DALL-E URL은 1시간 만료)
