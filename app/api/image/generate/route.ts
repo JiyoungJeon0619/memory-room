@@ -112,7 +112,7 @@ async function generateInBackground(params: {
 // ── POST 핸들러 — 즉시 응답 후 백그라운드 실행 ──
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createServerSupabaseClient()
+    const supabase = await createServerSupabaseClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
