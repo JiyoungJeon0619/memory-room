@@ -16,6 +16,9 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    console.log('[Kakao Debug] CLIENT_ID:', process.env.KAKAO_CLIENT_ID)
+    console.log('[Kakao Debug] REDIRECT_URI:', process.env.NEXT_PUBLIC_KAKAO_REDIRECT_URI)
+    console.log('[Kakao Debug] code:', code)
     // 1. 카카오에 code로 access_token 요청 (client_secret 없이)
     const tokenRes = await fetch('https://kauth.kakao.com/oauth/token', {
       method: 'POST',
