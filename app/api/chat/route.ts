@@ -5,13 +5,12 @@ import { createServerSupabaseClient } from '@/lib/supabase'
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 function getTimeGreeting() {
-  // 한국 시간 기준
   const now = new Date()
-  const koreaTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Seoul' }))
-  const hour = koreaTime.getHours()
-  if (hour < 12) return '좋은 아침'
-  if (hour < 18) return '좋은 오후'
-  if (hour < 21) return '좋은 저녁'
+  // UTC+9 한국 시간
+  const koreaHour = (now.getUTCHours() + 9) % 24
+  if (koreaHour >= 5 && koreaHour < 12) return '좋은 아침'
+  if (koreaHour >= 12 && koreaHour < 17) return '좋은 오후'
+  if (koreaHour >= 17 && koreaHour < 21) return '좋은 저녁'
   return '편안한 밤'
 }
 

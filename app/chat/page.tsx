@@ -120,14 +120,11 @@ export default function ChatPage() {
       })
       const data = await res.json()
       const reply: string = data.reply || ''
-      const memMatch = reply.match(/\[MEMORY:([\s\S]*?)\]/)
-      const cleanReply = reply.replace(/\[MEMORY:.*?\]/g, '').trim()
+      console.log('[Reply received]', reply.slice(-150))
 
-      const aiMsg: Message = { id:(Date.now()+1).toString(), role:'assistant', content:cleanReply }
-      setMessages(prev => [...prev, aiMsg])
-
-      if (sessionId) {
-        await supabase.from('messages').insert({ session_id:sessionId, user_id:user.id, role:'assistant', content:cleanReply })
+      // [MEMORY:...] 태그 추출 — 줄바꿈 포함, 대괄호 없어도 매칭
+      const memMatch = reply.match(/\[MEMORY:\s*([\s\S]+?)(?:\]|$)/)
+      const cleanReply = reply.replace(/\[MEMORY:[\s\S]*?(?:\]|$)/g, '').trim()
       }
 
       if (memMatch) {
