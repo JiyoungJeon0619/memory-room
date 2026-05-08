@@ -1,5 +1,6 @@
 'use client'
 
+import { useVoiceInput } from '@/hooks/useVoiceInput'
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
@@ -38,6 +39,12 @@ export default function ChatPage() {
   const [pendingMemory, setPendingMemory] = useState<Memory | null>(null)
   const [memoryCount, setMemoryCount] = useState(0)
   const [isRecording, setIsRecording] = useState(false)
+  const { status: voiceStatus, interimText, startRecording, stopRecording } = useVoiceInput({
+  onTranscript: (text) => {
+    sendMessage(text)
+    setMode('type')
+    },
+  })
   const [mode, setMode] = useState<'type' | 'voice'>('type')
 
   useEffect(() => {
@@ -78,16 +85,62 @@ export default function ChatPage() {
     // 첫 인사
     const name = prof?.name || '어머니'
     const topic = prof?.topics?.[0] || '삶'
-    const greetingMap: Record<string, string> = {
-      '나의 이야기': `${name}님, 오늘도 잘 오셨어요. 🌸\n\n처음 사회생활을 시작하셨을 때 어떤 일을 하셨는지 들을 수 있을까요?`,
-      '가족 이야기': `${name}님, 반가워요. 🌿\n\n가족 중에 가장 먼저 떠오르는 얼굴은 누구인가요?`,
-      '반려동물': `${name}님, 어서 오세요. 🐾\n\n가장 기억에 남는 반려동물 이야기가 있으신가요?`,
-      '고향과 추억': `${name}님, 잘 오셨어요. 🏡\n\n어릴 때 자주 놀던 장소가 기억나세요?`,
-      '음식과 요리': `${name}님, 안녕하세요. 🍲\n\n지금도 가끔 생각나는 음식이 있으신가요?`,
-      '일과 직업': `${name}님, 오늘도 오셨네요. 🌸\n\n일하셨던 시절 중 가장 보람찼던 순간이 언제였는지 여쭤봐도 될까요?`,
+    // 주제별 첫 질문 풀 (랜덤 선택)
+    const questionPool: Record<string, string[]> = {
+    '나의 이야기': [
+        '어릴 때 별명이 있으셨나요? 어떻게 생긴 별명이었어요?',
+        '처음으로 돈을 직접 벌었던 게 언제였는지 기억나세요?',
+        '살면서 가장 용감했다고 느낀 순간이 언제였나요?',
+        '학창 시절에 가장 좋아했던 과목이나 선생님이 기억나세요?',
+        '지금의 나를 만든 사람이 있다면 누구라고 생각하세요?',
+    ],
+    '가족 이야기': [
+        '어머니 아버지 중 누굴 더 많이 닮으셨다고 들으셨어요?',
+        '아이를 처음 안았던 그 순간이 어땠는지 들려주실 수 있어요?',
+        '가족 중에 가장 기억에 남는 에피소드가 있으신가요?',
+        '결혼하시기 전날 밤, 어떤 기분이었는지 기억나세요?',
+        '부모님께 끝내 못다 한 말이 있다면 어떤 말일까요?',
+    ],
+    '반려동물': [
+        '살면서 가장 오래 함께한 동물이 있으신가요?',
+        '가장 웃겼던 동물 에피소드가 있으신가요?',
+        '그 동물과 함께한 시간 중 가장 따뜻했던 장면이 뭔가요?',
+    ],
+    '고향과 추억': [
+        '어릴 때 자주 놀던 장소가 기억나세요?',
+        '고향에서 가장 좋아했던 계절은 언제였나요?',
+        '처음 고향을 떠났던 날이 기억나세요? 어떤 기분이었어요?',
+        '고향 음식 중 지금도 생각나는 맛이 있으신가요?',
+    ],
+    '일과 직업': [
+        '처음 일을 시작하셨을 때 몇 살이셨어요? 어떤 일이었나요?',
+        '일하면서 가장 뿌듯했던 순간이 언제였는지 기억나세요?',
+        '같이 일했던 사람 중 지금도 생각나는 분이 계세요?',
+        '일 말고 사실 하고 싶었던 다른 꿈이 있으셨나요?',
+    ],
+    '여행과 장소': [
+        '살면서 가장 멀리 가봤던 곳이 어디세요?',
+        '지금도 다시 가고 싶은 장소가 있으신가요?',
+        '사진은 없지만 눈에 선한 풍경이 있으신가요?',
+    ],
+    '음식과 요리': [
+        '어머니나 할머니가 해주시던 음식 중 지금도 생각나는 게 있으세요?',
+        '처음으로 직접 요리해봤던 게 뭐였는지 기억나세요?',
+        '가족들이 제일 좋아했던 내 음식이 뭐였나요?',
+        '특별한 날에 꼭 만들던 음식이 있었나요?',
+    ],
+    '꿈과 바람': [
+        '어릴 때 장래희망이 뭐였는지 기억나세요?',
+        '살면서 가장 이루고 싶었는데 못 이룬 것이 있나요?',
+        '지금 새로 배우고 싶은 것이 있으신가요?',
+        '가장 행복했던 시절이 언제였던 것 같으세요?',
+    ],
     }
-    const greeting = greetingMap[topic] || `${name}님, 오늘도 오셨네요. 🌸\n\n오늘은 어떤 이야기를 들려주실 건가요?`
 
+    const topic = prof?.topics?.[0] || '나의 이야기'
+    const pool = questionPool[topic] || questionPool['나의 이야기']
+    const randomQ = pool[Math.floor(Math.random() * pool.length)]
+    const greeting = `${name}님, 오늘도 오셨네요. 🌸\n\n${randomQ}`
     const firstMsg: Message = { id: 'init', role: 'assistant', content: greeting }
     setMessages([firstMsg])
 
@@ -320,16 +373,34 @@ export default function ChatPage() {
               <button onClick={() => sendMessage()} disabled={!input.trim() || isTyping} style={{ width:48, height:48, borderRadius:'50%', background:'#C4826A', border:'none', cursor:'pointer', fontSize:18, color:'white', flexShrink:0, boxShadow:'0 4px 16px rgba(196,130,106,0.36)' }}>→</button>
             </>
           ) : (
+        (
             <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:12, padding:'8px 0' }}>
-              <button
-                onClick={() => setIsRecording(!isRecording)}
-                style={{ width:64, height:64, borderRadius:'50%', background: isRecording ? '#C4826A' : 'white', border:'1.5px solid', borderColor: isRecording ? '#C4826A' : 'rgba(196,130,106,0.3)', cursor:'pointer', fontSize:26, boxShadow: isRecording ? '0 0 0 8px rgba(196,130,106,0.15)' : '0 2px 10px rgba(40,32,15,0.08)' }}
-              >
-                {isRecording ? '⏹️' : '🎙️'}
-              </button>
-              <div style={{ fontSize:13, color:'#C8B898' }}>{isRecording ? '녹음 중... 다시 누르면 완료' : '버튼을 눌러 말씀하세요'}</div>
+                <button
+                onClick={() => {
+                    if (voiceStatus === 'recording') {
+                    stopRecording()
+                    } else {
+                    startRecording()
+                    }
+                }}
+                style={{
+                    width:64, height:64, borderRadius:'50%',
+                    background: voiceStatus === 'recording' ? '#C4826A' : 'white',
+                    border:'1.5px solid',
+                    borderColor: voiceStatus === 'recording' ? '#C4826A' : 'rgba(196,130,106,0.3)',
+                    cursor:'pointer', fontSize:26,
+                    boxShadow: voiceStatus === 'recording' ? '0 0 0 8px rgba(196,130,106,0.15)' : '0 2px 10px rgba(40,32,15,0.08)',
+                }}
+                >
+                {voiceStatus === 'recording' ? '⏹️' : voiceStatus === 'transcribing' ? '⏳' : '🎙️'}
+                </button>
+                <div style={{ fontSize:13, color:'#C8B898' }}>
+                {voiceStatus === 'recording' ? '녹음 중... 다시 누르면 완료' :
+                voiceStatus === 'transcribing' ? '글로 옮기는 중이에요...' :
+                interimText || '버튼을 눌러 말씀하세요'}
+                </div>
             </div>
-          )}
+            )
         </div>
       </div>
 
