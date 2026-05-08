@@ -19,9 +19,11 @@ export async function POST(request: NextRequest) {
 
     const { messages, profile, isWrapUp } = await request.json()
 
-    const name         = profile?.name || '어머니'
-    const birth        = profile?.birth_year || ''
-    const topics       = profile?.topics?.join(', ') || '삶'
+    const name     = profile?.name || '어머니'
+    const birth    = profile?.birth_year || ''
+    const topics   = profile?.topics?.join(', ') || '삶'
+    const gender   = profile?.gender || ''
+    const genderNote = gender === '여성' ? '여성이시며, 며느리/어머니/할머니 관점의 표현을 자연스럽게 사용하세요.' : gender === '남성' ? '남성이시며, 아버지/할아버지 관점의 표현을 자연스럽게 사용하세요.' : ''
     const turnCount    = Math.floor(messages.length / 2)
     const timeGreeting = getTimeGreeting()
 
@@ -44,7 +46,9 @@ export async function POST(request: NextRequest) {
 자연스러운 흐름에서 [MEMORY: 문장] 을 포함해주세요.` : ''
 
     const system = `당신은 ${name}님(${birth})의 인생 이야기를 따뜻하게 듣는 AI 동반자입니다.
-담고 싶은 이야기 주제: ${topics}
+    ${genderNote}
+    담고 싶은 이야기 주제: ${topics}
+    ...`
 
 말투: 정중하고 따뜻하게. "~네요" "~군요" "~셨군요" 사용. 짧게 공감 후 구체적 질문 하나만.
 절대 설교하거나 평가하지 않음. 이름(${name}님)을 가끔 자연스럽게 부름.
