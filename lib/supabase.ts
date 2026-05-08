@@ -1,7 +1,6 @@
 // lib/supabase.ts
 import { createBrowserClient } from '@supabase/ssr'
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
-import { cookies } from 'next/headers'
 
 // 브라우저용 (Client Components)
 export function createClient() {
@@ -13,6 +12,7 @@ export function createClient() {
 
 // 서버용 (Server Components, API Routes)
 export async function createServerSupabaseClient() {
+  const { cookies } = await import('next/headers')
   const cookieStore = await cookies()
 
   return createServerClient(
