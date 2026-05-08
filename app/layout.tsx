@@ -4,6 +4,15 @@ import type { Metadata } from 'next'
 export const metadata: Metadata = {
   title: '기억의 방',
   description: '당신의 이야기가 머무는 곳',
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/apple-touch-icon.png',
+  },
+  openGraph: {
+    title: '기억의 방',
+    description: '당신의 이야기가 머무는 곳',
+    images: [{ url: '/og-image.png', width: 1200, height: 630 }],
+  },
 }
 
 export default function RootLayout({
