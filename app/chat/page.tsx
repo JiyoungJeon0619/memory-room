@@ -16,12 +16,12 @@ export default function ChatPage() {
       padding: '40px 24px', textAlign: 'center',
     }}>
       <div style={{ fontSize: 48, marginBottom: 24 }}>🌸</div>
-      <h1 style={{ fontSize: 28, fontWeight: 700, color: '#28200F', marginBottom: 12 }}>
-        기억의 방
+      <h1 style={{ fontSize: 26, fontWeight: 700, color: '#28200F', marginBottom: 12 }}>
+        오늘의 이야기
       </h1>
       <p style={{ fontSize: 16, color: '#9A8870', lineHeight: 1.9, marginBottom: 40 }}>
-        로그인 성공! 🎉<br />
-        채팅 화면을 곧 만들게요.
+        채팅 기능을 준비 중이에요.<br />
+        곧 대화를 나눌 수 있을 거예요.
       </p>
       <button
         onClick={() => router.push('/book')}
@@ -30,7 +30,6 @@ export default function ChatPage() {
           color: 'white', border: 'none', borderRadius: 14,
           fontSize: 17, cursor: 'pointer',
           fontFamily: "'Gowun Batang', serif",
-          marginBottom: 12,
         }}
       >
         📚 내 책 보기
