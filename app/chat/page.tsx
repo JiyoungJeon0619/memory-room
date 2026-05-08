@@ -90,7 +90,8 @@ export default function ChatPage() {
 
   async function sendMessage(text?: string, isWrapUp = false) {
     const content = text || input.trim()
-    if (!content || isTyping) return
+    if (!content) return
+    if (!isWrapUp && isTyping) return
     setInput('')
     if (taRef.current) taRef.current.style.height = 'auto'
 
