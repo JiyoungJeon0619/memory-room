@@ -5,10 +5,14 @@ import { createServerSupabaseClient } from '@/lib/supabase'
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 function getTimeGreeting() {
-  const hour = new Date().getHours()
+  // 한국 시간 기준
+  const now = new Date()
+  const koreaTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Seoul' }))
+  const hour = koreaTime.getHours()
   if (hour < 12) return '좋은 아침'
   if (hour < 18) return '좋은 오후'
-  return '편안한 저녁'
+  if (hour < 21) return '좋은 저녁'
+  return '편안한 밤'
 }
 
 export async function POST(request: NextRequest) {

@@ -120,7 +120,7 @@ export default function ChatPage() {
       })
       const data = await res.json()
       const reply: string = data.reply || ''
-      const memMatch = reply.match(/\[MEMORY:(.*?)\]/)
+      const memMatch = reply.match(/\[MEMORY:([\s\S]*?)\]/)
       const cleanReply = reply.replace(/\[MEMORY:.*?\]/g, '').trim()
 
       const aiMsg: Message = { id:(Date.now()+1).toString(), role:'assistant', content:cleanReply }
