@@ -109,7 +109,7 @@ export default function ChatPage() {
     }
   }
 
-  async function sendMessage(text?: string) {
+  async function sendMessage(text?: string, isWrapUp = false) {
     const content = text || input.trim()
     if (!content || isTyping) return
     setInput('')
@@ -131,8 +131,7 @@ export default function ChatPage() {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: [...messages, userMsg].map(m => ({ role: m.role, content: m.content })), profile }),
-      })
+        body: JSON.stringify({ messages: [...messages, userMsg].map(m => ({ role: m.role, content: m.content })), profile, isWrapUp }),      })
       const data = await res.json()
       const reply: string = data.reply || ''
       const memMatch = reply.match(/\[MEMORY:(.*?)\]/)
@@ -201,6 +200,12 @@ export default function ChatPage() {
           <div style={{ fontSize:17, fontWeight:700, color:'#28200F' }}>{profile?.name ? `${profile.name}님의 기억의 방` : '기억의 방'}</div>
           <div style={{ fontSize:12, color:'#9A8870', marginTop:1 }}>{new Date().toLocaleDateString('ko-KR', { month:'long', day:'numeric', weekday:'long' })}</div>
         </div>
+        <button
+        onClick={() => sendMessage('오늘 이야기를 마무리할게요.', true)}
+        style={{ background:'rgba(196,130,106,0.12)', border:'1px solid rgba(196,130,106,0.25)', borderRadius:20, padding:'7px 14px', fontSize:12, color:'#C4826A', cursor:'pointer', fontFamily:"'Gowun Batang',serif", marginRight:6 }}
+        >
+        🌸 마무리
+        </button>
         <button onClick={() => router.push('/book')} style={{ background:'#F0DEB8', border:'1px solid rgba(200,160,96,0.28)', borderRadius:20, padding:'7px 14px', fontSize:12, color:'#5A4A30', cursor:'pointer', fontFamily:"'Gowun Batang',serif" }}>
           📚 내 책 ({memoryCount})
         </button>
