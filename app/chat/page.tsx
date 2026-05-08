@@ -63,7 +63,7 @@ export default function ChatPage() {
   const supabase = createClient()
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const taRef = useRef<HTMLTextAreaElement>(null)
-
+  const [showTopicModal, setShowTopicModal] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
@@ -206,6 +206,11 @@ export default function ChatPage() {
         >
         🌸 마무리
         </button>
+        <button onClick={() => setShowTopicModal(true)}
+        style={{ background:'rgba(200,168,96,0.12)', border:'1px solid rgba(200,168,96,0.25)', borderRadius:20, padding:'7px 14px', fontSize:12, color:'#5A4A30', cursor:'pointer', fontFamily:"'Gowun Batang',serif", marginRight:6 }}
+        >
+        ⚙️ 주제
+        </button>
         <button onClick={() => router.push('/book')} style={{ background:'#F0DEB8', border:'1px solid rgba(200,160,96,0.28)', borderRadius:20, padding:'7px 14px', fontSize:12, color:'#5A4A30', cursor:'pointer', fontFamily:"'Gowun Batang',serif" }}>
           📚 내 책 ({memoryCount})
         </button>
@@ -315,7 +320,7 @@ export default function ChatPage() {
       </div>
 
       <style>{`
-        @keyframes bounce { 0%,60%,100%{transform:scale(1);opacity:0.45} 30%{transform:scale(1.4);opacity:1} }
+        @keyframes bounce { ... }
       `}</style>
     </div>
   )

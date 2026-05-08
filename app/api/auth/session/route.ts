@@ -4,8 +4,7 @@ import { createServerSupabaseClient } from '@/lib/supabase'
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
-  const token  = searchParams.get('token')
-  const userId = searchParams.get('userId')
+  const token = searchParams.get('token')
 
   if (!token) {
     return NextResponse.redirect(new URL('/login?error=no_token', request.url))
@@ -14,7 +13,6 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = await createServerSupabaseClient()
 
-    // 매직링크 토큰으로 세션 수립
     const { error } = await supabase.auth.verifyOtp({
       token_hash: token,
       type: 'magiclink',
@@ -25,8 +23,25 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL('/login?error=session_failed', request.url))
     }
 
-    // 로그인 성공 → 온보딩 또는 채팅으로
-    return NextResponse.redirect(new URL('/onboarding', request.url))
+    // 프로필 확인 — 이름이 없으면 온보딩, 있으면 채팅
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return NextResponse.redirect(new URL('/login?error=no_user', request.url))
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('name, topics')
+      .eq('id', user.id)
+      .single()
+
+    const isNewUser = !profile?.name || profile.name === ''
+
+    if (isNewUser) {
+      return NextResponse.redirect(new URL('/onboarding', request.url))
+    } else {
+      return NextResponse.redirect(new URL('/chat', request.url))
+    }
 
   } catch (err: any) {
     console.error('[Session Error]', err)
