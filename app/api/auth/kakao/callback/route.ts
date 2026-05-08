@@ -24,10 +24,10 @@ export async function GET(request: NextRequest) {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
-        grant_type:   'authorization_code',
-        client_id:    process.env.KAKAO_CLIENT_ID!,
-        redirect_uri: process.env.NEXT_PUBLIC_KAKAO_REDIRECT_URI!,
-        code,
+       grant_type:   'authorization_code',
+        client_id:    'ad24f55b011490517d71c8562bc3c92d',
+       redirect_uri: 'https://memory-room-tk2d.vercel.app/api/auth/kakao/callback',
+       code,
       }),
     })
     const tokenData = await tokenRes.json()
