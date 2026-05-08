@@ -125,7 +125,6 @@ export default function ChatPage() {
       // [MEMORY:...] 태그 추출 — 줄바꿈 포함, 대괄호 없어도 매칭
       const memMatch = reply.match(/\[MEMORY:\s*([\s\S]+?)(?:\]|$)/)
       const cleanReply = reply.replace(/\[MEMORY:[\s\S]*?(?:\]|$)/g, '').trim()
-      }
 
       if (memMatch) {
         setTimeout(() => setPendingMemory({ quote:memMatch[1].trim(), saved:false }), 600)
