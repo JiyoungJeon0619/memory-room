@@ -74,17 +74,25 @@ export async function GET(request: NextRequest) {
       })
     }
 
+// ... 기존 코드 (생략)
+
     // 5. 매직링크로 세션 생성
+    // 84번 라인 근처부터 끝까지 덮어쓰세요
     const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
-      type:  'magiclink',
+      type: 'magiclink',
       email: `kakao_${kakaoId}@memory-room.app`,
     })
     if (linkError || !linkData) throw linkError
 
-    const token      = linkData.properties?.hashed_token
+    const token = linkData.properties?.hashed_token
     const redirectTo = new URL('/api/auth/session', request.url)
     redirectTo.searchParams.set('token', token)
     redirectTo.searchParams.set('userId', userId)
+
+    // ✅ 신규 유저라면 온보딩으로 보내기 위한 표식 추가
+    if (!existingProfile) {
+      redirectTo.searchParams.set('isNew', 'true')
+    }
 
     return NextResponse.redirect(redirectTo)
 
@@ -92,4 +100,4 @@ export async function GET(request: NextRequest) {
     console.error('[Kakao Callback Error]', err)
     return NextResponse.redirect(new URL('/login?error=auth_failed', request.url))
   }
-}
+} // 이 중괄호가 GET 함수를 닫습니다.
