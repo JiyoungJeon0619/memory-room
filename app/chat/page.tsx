@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { useVoiceInput } from '@/hooks/useVoiceInput'
@@ -30,10 +30,11 @@ export default function ChatPage() {
   const taRef = useRef<HTMLTextAreaElement>(null)
   const sessionIdRef = useRef<string | null>(null)
   const profileRef = useRef<any>(null)
+  const messagesRef = useRef<Message[]>([])
+  const isTypingRef = useRef(false)
 
   const [isMounted, setIsMounted] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
-  const [turnCount, setTurnCount] = useState(0)
   const [input, setInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
   const [profile, setProfile] = useState<any>(null)
@@ -43,9 +44,14 @@ export default function ChatPage() {
   const [showTopicModal, setShowTopicModal] = useState(false)
   const [localTopics, setLocalTopics] = useState<string[]>([])
 
-  const { status: voiceStatus, interimText, startRecording, stopRecording } = useVoiceInput({
-    onTranscript: (text) => { sendMessage(text); setMode('type') },
-  })
+  // messages state와 ref 동기화
+  const updateMessages = (updater: (prev: Message[]) => Message[]) => {
+    setMessages(prev => {
+      const next = updater(prev)
+      messagesRef.current = next
+      return next
+    })
+  }
 
   useEffect(() => {
     setIsMounted(true)
@@ -69,42 +75,41 @@ export default function ChatPage() {
     setMemoryCount(count || 0)
 
     const { data: session } = await supabase.from('sessions').insert({ user_id: user.id, title: '새 대화' }).select().single()
-    if (session) {
-      sessionIdRef.current = session.id
-    }
+    if (session) sessionIdRef.current = session.id
 
     setIsTyping(true)
+    isTypingRef.current = true
     try {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: [],
-          profile: prof,
-          isWrapUp: false,
-        }),
+        body: JSON.stringify({ messages: [], profile: prof, isWrapUp: false }),
       })
       const data = await res.json()
       const greeting = data.reply || ''
 
-      setMessages([{ id: `init-${Date.now()}`, role: 'assistant', content: greeting }])
+      const initMsg: Message = { id: `init-${Date.now()}`, role: 'assistant', content: greeting }
+      messagesRef.current = [initMsg]
+      setMessages([initMsg])
 
       if (session) {
         await supabase.from('messages').insert({
           session_id: session.id, user_id: user.id, role: 'assistant', content: greeting
         })
       }
-    } catch (error) {
-      console.error('첫인사 에러:', error)
+    } catch (e) {
+      console.error('첫인사 에러:', e)
     } finally {
       setIsTyping(false)
+      isTypingRef.current = false
     }
   }
 
-  async function sendMessage(text?: string, isWrapUp = false) {
-    const content = text || input.trim()
+  const sendMessage = useCallback(async (text?: string, isWrapUp = false) => {
+    const content = text || (taRef.current ? taRef.current.value.trim() : '')
     if (!content) return
-    if (!isWrapUp && isTyping) return
+    if (!isWrapUp && isTypingRef.current) return
+
     setInput('')
     if (taRef.current) taRef.current.style.height = 'auto'
 
@@ -114,8 +119,9 @@ export default function ChatPage() {
     const currentSessionId = sessionIdRef.current
     const currentProfile = profileRef.current
 
-    const userMsg: Message = { id: `u-${Date.now()}-${Math.random()}`, role: 'user', content }
-    const newMessages = [...messages, userMsg]
+    const userMsg: Message = { id: `u-${Date.now()}`, role: 'user', content }
+    const newMessages = [...messagesRef.current, userMsg]
+    messagesRef.current = newMessages
     setMessages(newMessages)
 
     if (currentSessionId) {
@@ -123,6 +129,7 @@ export default function ChatPage() {
     }
 
     setIsTyping(true)
+    isTypingRef.current = true
 
     try {
       const res = await fetch('/api/chat', {
@@ -142,14 +149,10 @@ export default function ChatPage() {
       const memMatch = reply.match(/\[MEMORY:\s*([\s\S]+?)(?:\]|$)/)
       const cleanReply = reply.replace(/\[MEMORY:[\s\S]*?(?:\]|$)/g, '').trim()
 
-      const assistantMsg: Message = {
-        id: `a-${Date.now()}-${Math.random()}`,
-        role: 'assistant',
-        content: cleanReply,
-      }
-
-      setMessages(prev => [...prev, assistantMsg])
-      setTurnCount(prev => prev + 1)
+      const assistantMsg: Message = { id: `a-${Date.now()}`, role: 'assistant', content: cleanReply }
+      const withAssistant = [...messagesRef.current, assistantMsg]
+      messagesRef.current = withAssistant
+      setMessages(withAssistant)
 
       if (currentSessionId) {
         await supabase.from('messages').insert({
@@ -161,21 +164,27 @@ export default function ChatPage() {
         setTimeout(() => setPendingMemory({ quote: memMatch[1].trim(), saved: false }), 600)
       }
     } catch {
-      setMessages(prev => [...prev, { id: 'err', role: 'assistant', content: '잠시 연결이 끊겼어요.' }])
+      const errMsg: Message = { id: 'err', role: 'assistant', content: '잠시 연결이 끊겼어요.' }
+      const withErr = [...messagesRef.current, errMsg]
+      messagesRef.current = withErr
+      setMessages(withErr)
     } finally {
       setIsTyping(false)
+      isTypingRef.current = false
     }
-  }
+  }, [])
+
+  const { status: voiceStatus, interimText, startRecording, stopRecording } = useVoiceInput({
+    onTranscript: (text) => { sendMessage(text); setMode('type') },
+  })
 
   async function saveMemory() {
     if (!pendingMemory) return
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
-    const currentSessionId = sessionIdRef.current
-
     const { data: mem } = await supabase.from('memories').insert({
-      user_id: user.id, session_id: currentSessionId,
+      user_id: user.id, session_id: sessionIdRef.current,
       quote: pendingMemory.quote, wc_index: memoryCount % WC.length, image_status: 'none',
     }).select().single()
 
@@ -187,9 +196,10 @@ export default function ChatPage() {
       fetch('/api/image/generate', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          memoryId: mem.id, sessionId: currentSessionId, memoryQuote: pendingMemory.quote,
+          memoryId: mem.id, sessionId: sessionIdRef.current,
+          memoryQuote: pendingMemory.quote,
           topic: profileRef.current?.topics?.[0] || '삶',
-          messages: messages.map(m => ({ role: m.role, content: m.content })),
+          messages: messagesRef.current.map(m => ({ role: m.role, content: m.content })),
         }),
       })
     }
@@ -217,9 +227,7 @@ export default function ChatPage() {
 
   const wc = WC[memoryCount % WC.length]
 
-  if (!isMounted) {
-    return <div style={{ background: '#FAF6EF', height: '100vh' }} />
-  }
+  if (!isMounted) return <div style={{ background: '#FAF6EF', height: '100vh' }} />
 
   return (
     <div style={{ display:'flex', flexDirection:'column', height:'100vh', background:'linear-gradient(180deg,#FAF6EF 0%,#F5EAD8 100%)', fontFamily:"'Gowun Batang',serif" }}>
